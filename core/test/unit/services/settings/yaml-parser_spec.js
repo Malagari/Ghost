@@ -1,5 +1,3 @@
-'use strict';
-
 const sinon = require('sinon'),
     should = require('should'),
     fs = require('fs-extra'),
@@ -27,7 +25,7 @@ describe('UNIT > Settings Service:', function () {
 
             const result = yamlParser(file, 'goodroutes.yaml');
             should.exist(result);
-            result.should.be.an.Object().with.properties('routes', 'collections', 'resources');
+            result.should.be.an.Object().with.properties('routes', 'collections', 'taxonomies');
             yamlSpy.calledOnce.should.be.true();
         });
 
@@ -40,7 +38,7 @@ describe('UNIT > Settings Service:', function () {
             } catch (error) {
                 should.exist(error);
                 error.message.should.eql('Could not parse badroutes.yaml: bad indentation of a mapping entry.');
-                error.context.should.eql('bad indentation of a mapping entry at line 5, column 10:\n        route: \'{globals.permalinks}\'\n             ^');
+                error.context.should.containEql('bad indentation of a mapping entry at line 5, column 14');
                 error.help.should.eql('Check your badroutes.yaml file for typos and fix the named issues.');
                 yamlSpy.calledOnce.should.be.true();
             }

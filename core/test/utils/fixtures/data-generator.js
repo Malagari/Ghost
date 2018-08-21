@@ -22,8 +22,6 @@ DataGenerator.markdownToMobiledoc = function markdownToMobiledoc(content) {
     return JSON.stringify(mobiledoc);
 };
 
-/*jshint quotmark:false*/
-// jscs:disable validateQuoteMarks, requireCamelCaseOrUpperCaseIdentifiers
 DataGenerator.Content = {
     posts: [
         {
@@ -47,13 +45,13 @@ DataGenerator.Content = {
             title: 'Short and Sweet',
             slug: 'short-and-sweet',
             mobiledoc: DataGenerator.markdownToMobiledoc('## testing\n\nmctesters\n\n- test\n- line\n- items'),
-            html: '<div class=\"kg-card-markdown\"><h2 id=\"testing\">testing</h2>\n<p>mctesters</p>\n<ul>\n<li>test</li>\n<li>line</li>\n<li>items</li>\n</ul>\n</div>',
+            html: '<h2 id=\"testing\">testing</h2>\n<p>mctesters</p>\n<ul>\n<li>test</li>\n<li>line</li>\n<li>items</li>\n</ul>\n',
             plaintext: 'testing\nmctesters\n\n * test\n * line\n * items',
             feature_image: 'http://placekitten.com/500/200',
             meta_description: 'test stuff',
             published_at: new Date('2015-01-03'),
-            uuid: '2ac6b4f6-e1f3-406c-9247-c94a0496d39d',
-            featured: true
+            featured: true,
+            uuid: '2ac6b4f6-e1f3-406c-9247-c94a0496d39d'
         },
         {
             id: ObjectId.generate(),
@@ -132,7 +130,7 @@ DataGenerator.Content = {
             name: 'Joe Bloggs',
             slug: 'joe-bloggs',
             email: 'jbloggs@example.com',
-            password: '$2b$10$ujPIlqjTsYwfc2/zrqZXZ.yd7cQQm2iOkAFenTAJfveKkc23nwdeS',
+            password: 'Sl1m3rson99',
             profile_image: 'https://example.com/super_photo.jpg'
         },
         {
@@ -141,7 +139,7 @@ DataGenerator.Content = {
             name: 'Smith Wellingsworth',
             slug: 'smith-wellingsworth',
             email: 'swellingsworth@example.com',
-            password: '$2b$10$ujPIlqjTsYwfc2/zrqZXZ.yd7cQQm2iOkAFenTAJfveKkc23nwdeS'
+            password: 'Sl1m3rson99'
         },
         {
             // editor
@@ -149,7 +147,7 @@ DataGenerator.Content = {
             name: 'Jimothy Bogendath',
             slug: 'jimothy-bogendath',
             email: 'jbOgendAth@example.com',
-            password: '$2b$10$ujPIlqjTsYwfc2/zrqZXZ.yd7cQQm2iOkAFenTAJfveKkc23nwdeS'
+            password: 'Sl1m3rson99'
         },
         {
             // author
@@ -157,7 +155,7 @@ DataGenerator.Content = {
             name: 'Slimer McEctoplasm',
             slug: 'slimer-mcectoplasm',
             email: 'smcectoplasm@example.com',
-            password: '$2b$10$ujPIlqjTsYwfc2/zrqZXZ.yd7cQQm2iOkAFenTAJfveKkc23nwdeS'
+            password: 'Sl1m3rson99'
         },
         {
             // editor 2
@@ -165,7 +163,7 @@ DataGenerator.Content = {
             name: 'Ivan Email',
             slug: 'ivan-email',
             email: 'info1@ghost.org',
-            password: '$2b$10$ujPIlqjTsYwfc2/zrqZXZ.yd7cQQm2iOkAFenTAJfveKkc23nwdeS'
+            password: 'Sl1m3rson99'
         },
         {
             // author 2
@@ -173,7 +171,7 @@ DataGenerator.Content = {
             name: 'Author2',
             slug: 'a-2',
             email: 'info2@ghost.org',
-            password: '$2b$10$ujPIlqjTsYwfc2/zrqZXZ.yd7cQQm2iOkAFenTAJfveKkc23nwdeS'
+            password: 'Sl1m3rson99'
         },
         {
             // admin 2
@@ -181,7 +179,7 @@ DataGenerator.Content = {
             name: 'admin2',
             slug: 'ad-2',
             email: 'info3@ghost.org',
-            password: '$2b$10$ujPIlqjTsYwfc2/zrqZXZ.yd7cQQm2iOkAFenTAJfveKkc23nwdeS'
+            password: 'Sl1m3rson99'
         },
         {
             // contributor
@@ -189,7 +187,7 @@ DataGenerator.Content = {
             name: 'Contributor',
             slug: 'contributor',
             email: 'contributor@ghost.org',
-            password: '$2b$10$ujPIlqjTsYwfc2/zrqZXZ.yd7cQQm2iOkAFenTAJfveKkc23nwdeS'
+            password: 'Sl1m3rson99'
         },
         {
             // contributor
@@ -197,7 +195,7 @@ DataGenerator.Content = {
             name: 'contributor2',
             slug: 'contrib-2',
             email: 'contributor2@ghost.org',
-            password: '$2b$10$ujPIlqjTsYwfc2/zrqZXZ.yd7cQQm2iOkAFenTAJfveKkc23nwdeS'
+            password: 'Sl1m3rson99'
         }
     ],
 
@@ -404,6 +402,9 @@ DataGenerator.forKnex = (function () {
 
         return _.defaults(newObj, {
             id: ObjectId.generate(),
+            name: 'tag',
+            slug: 'slug',
+            description: 'description',
             visibility: 'public',
             created_by: DataGenerator.Content.users[0].id,
             created_at: new Date(),
@@ -435,6 +436,7 @@ DataGenerator.forKnex = (function () {
             feature_image: null,
             featured: false,
             page: false,
+            slug: 'slug',
             author_id: DataGenerator.Content.users[0].id,
             updated_at: new Date(),
             updated_by: DataGenerator.Content.users[0].id,
@@ -465,19 +467,30 @@ DataGenerator.forKnex = (function () {
     }
 
     function createUser(overrides) {
-        var newObj = _.cloneDeep(overrides);
+        var newObj = _.cloneDeep(overrides || {});
+
+        if (!newObj.slug) {
+            newObj.slug = 'slug_' + Date.now();
+        }
+        if (!newObj.email) {
+            newObj.email = `test${newObj.slug}@ghost.org`;
+        }
 
         return _.defaults(newObj, {
             id: ObjectId.generate(),
             name: 'name',
-            slug: 'slug_' + Date.now(),
+            email: 'test@ghost.org',
+            bio: 'bio',
+            website: null,
+            profile_image: null,
             status: 'active',
-            password: '$2b$10$ujPIlqjTsYwfc2/zrqZXZ.yd7cQQm2iOkAFenTAJfveKkc23nwdeS',
+            password: 'Sl1m3rson99',
             created_by: DataGenerator.Content.users[0].id,
             created_at: new Date(),
             updated_at: new Date(),
             updated_by: DataGenerator.Content.users[0].id,
-            visibility: 'public'
+            visibility: 'public',
+            location: 'location'
         });
     }
 
@@ -505,7 +518,7 @@ DataGenerator.forKnex = (function () {
             name: 'Joe Bloggs',
             slug: 'joe-blogs',
             email: 'joe_' + uniqueInteger + '@example.com',
-            password: '$2b$10$ujPIlqjTsYwfc2/zrqZXZ.yd7cQQm2iOkAFenTAJfveKkc23nwdeS'
+            password: 'Sl1m3rson99'
         });
     }
 
@@ -514,6 +527,23 @@ DataGenerator.forKnex = (function () {
             id: ObjectId.generate(),
             post_id: postId,
             tag_id: tagId
+        };
+    }
+
+    function createUsersRoles(userId, roleId) {
+        return {
+            id: ObjectId.generate(),
+            user_id: userId,
+            role_id: roleId
+        };
+    }
+
+    function createPostsAuthors(postId, authorId, sort_order = 0) {
+        return {
+            id: ObjectId.generate(),
+            author_id: authorId,
+            post_id: postId,
+            sort_order: sort_order
         };
     }
 
@@ -539,6 +569,31 @@ DataGenerator.forKnex = (function () {
             app_id: DataGenerator.Content.apps[0].id,
             created_by: DataGenerator.Content.users[0].id,
             created_at: new Date()
+        });
+    }
+
+    function createSubscriber(overrides) {
+        const newObj = _.cloneDeep(overrides);
+
+        return _.defaults(newObj, {
+            id: ObjectId.generate(),
+            email: 'subscriber@ghost.org'
+        });
+    }
+
+    function createSetting(overrides) {
+        const newObj = _.cloneDeep(overrides);
+
+        return _.defaults(newObj, {
+            id: ObjectId.generate(),
+            uuid: "95ce1c53-69b0-4f5f-be91-d3aeb39046b5",
+            key: "title",
+            value: null,
+            type: "blog",
+            created_at: new Date(),
+            created_by: DataGenerator.Content.users[0].id,
+            updated_at: new Date(),
+            updated_by: DataGenerator.Content.users[0].id
         });
     }
 
@@ -786,6 +841,8 @@ DataGenerator.forKnex = (function () {
         createGenericPost: createGenericPost,
         createTag: createTag,
         createUser: createUser,
+        createUsersRoles: createUsersRoles,
+        createPostsAuthors: createPostsAuthors,
         createClient: createClient,
         createGenericUser: createGenericUser,
         createBasic: createBasic,
@@ -794,9 +851,10 @@ DataGenerator.forKnex = (function () {
         createPostsTags: createPostsTags,
         createApp: createBasic,
         createAppField: createAppField,
+        createSetting: createSetting,
         createAppSetting: createAppSetting,
         createToken: createToken,
-        createSubscriber: createBasic,
+        createSubscriber: createSubscriber,
         createInvite: createInvite,
         createTrustedDomain: createTrustedDomain,
         createWebhook: createWebhook,

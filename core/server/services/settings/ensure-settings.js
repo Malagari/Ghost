@@ -1,5 +1,3 @@
-'use strict';
-
 const fs = require('fs-extra'),
     Promise = require('bluebird'),
     path = require('path'),
@@ -26,7 +24,7 @@ module.exports = function ensureSettingsFiles(knownSettings) {
             defaultFileName = `default-${fileName}`,
             filePath = path.join(contentPath, fileName);
 
-        return fs.access(filePath)
+        return fs.readFile(filePath, 'utf8')
             .catch({code: 'ENOENT'}, () => {
                 // CASE: file doesn't exist, copy it from our defaults
                 return fs.copy(

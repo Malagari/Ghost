@@ -20,17 +20,6 @@
             "amp"
         ]
     },
-    "routeKeywords": {
-        "tag": "tag",
-        "author": "author",
-        "page": "page",
-        "preview": "p",
-        "private": "private",
-        "subscribe": "subscribe",
-        "amp": "amp",
-        "primaryTagFallback": "all",
-        "primaryAuthorFallback": "all"
-    },
     "slugs": {
         "reserved": ["admin", "app", "apps", "categories",
             "category", "dashboard", "feed", "ghost-admin", "login", "logout",
@@ -62,6 +51,10 @@
         "redirects": {
             "extensions": [".json"],
             "contentTypes": ["text/plain", "application/octet-stream", "application/json"]
+        },
+        "routes": {
+            "extensions": [".yaml"],
+            "contentTypes": ["text/plain", "text/yaml", "application/octet-stream", "application/yaml"]
         }
     },
     "times": {

@@ -1,5 +1,3 @@
-'use strict';
-
 const _ = require('lodash'),
     Promise = require('bluebird'),
     validator = require('validator'),
@@ -27,7 +25,9 @@ User = ghostBookshelf.Model.extend({
 
     defaults: function defaults() {
         return {
-            password: security.identifier.uid(50)
+            password: security.identifier.uid(50),
+            visibility: 'public',
+            status: 'active'
         };
     },
 

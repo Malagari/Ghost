@@ -1,33 +1,28 @@
-'use strict';
 /* eslint no-invalid-this:0 */
 
-const should = require('should'), // jshint ignore:line
+const should = require('should'),
     sinon = require('sinon'),
     _ = require('lodash'),
     testUtils = require('../../utils'),
     knex = require('../../../server/data/db').knex,
-    settingsCache = require('../../../server/services/settings/cache'),
+    urlService = require('../../../server/services/url'),
     schema = require('../../../server/data/schema'),
     models = require('../../../server/models'),
     common = require('../../../server/lib/common'),
     security = require('../../../server/lib/security'),
-    utils = require('../../utils'),
     sandbox = sinon.sandbox.create();
 
 describe('Unit: models/post', function () {
-    let knexMock;
-
     before(function () {
         models.init();
     });
 
-    before(function () {
-        knexMock = new testUtils.mocks.knex();
-        knexMock.mock();
-    });
+    before(testUtils.teardown);
+    before(testUtils.setup('users:roles', 'posts'));
 
     beforeEach(function () {
         sandbox.stub(security.password, 'hash').resolves('$2a$10$we16f8rpbrFZ34xWj0/ZC.LTPUux8ler7bcdTs5qIleN6srRHhilG');
+        sandbox.stub(urlService, 'getUrlByResourceId');
     });
 
     afterEach(function () {
@@ -35,27 +30,7 @@ describe('Unit: models/post', function () {
     });
 
     after(function () {
-        knexMock.unmock();
-    });
-
-    after(function () {
         sandbox.restore();
-    });
-
-    describe('findPage', function () {
-        /**
-         * This is a @bug.
-         * If you don't include tags, we can't generate the url properly.
-         * Will be fixed when merging channels, because the post model has no longer generate the url.
-         */
-        it('[bug] permalink: /:primary_tag/:slug/, columns: [title,url]', function () {
-            sandbox.stub(settingsCache, 'get').withArgs('permalinks').returns('/:primary_tag/:slug/');
-
-            return models.Post.findPage({columns: ['title', 'url']})
-                .then(function (result) {
-                    result.posts[0].url.should.eql('/all/html-ipsum/');
-                });
-        });
     });
 
     describe('add', function () {
@@ -81,6 +56,10 @@ describe('Unit: models/post', function () {
 
                         _.each(_.keys(_.omit(schema.tables.posts, ['mobiledoc', 'amp', 'plaintext'])), (key) => {
                             should.exist(post.hasOwnProperty(key));
+
+                            if (['page', 'status', 'visibility', 'featured'].indexOf(key) !== -1) {
+                                events.post[0].data[key].should.eql(schema.tables.posts[key].defaultTo);
+                            }
                         });
 
                         should.not.exist(post.authors);
@@ -92,12 +71,39 @@ describe('Unit: models/post', function () {
 
                         _.each(_.keys(_.omit(schema.tables.posts, ['mobiledoc', 'amp', 'plaintext'])), (key) => {
                             should.exist(events.post[0].data.hasOwnProperty(key));
+
+                            if (['page', 'status', 'visibility', 'featured'].indexOf(key) !== -1) {
+                                events.post[0].data[key].should.eql(schema.tables.posts[key].defaultTo);
+                            }
                         });
 
                         should.exist(events.post[0].data.authors);
                         should.exist(events.post[0].data.primary_author);
                         should.exist(events.post[0].data.tags);
                         should.exist(events.post[0].data.primary_tag);
+                    });
+            });
+
+            it('with page:1', function () {
+                const events = {
+                    post: []
+                };
+
+                sandbox.stub(models.Post.prototype, 'emitChange').callsFake(function (event) {
+                    events.post.push({event: event, data: this.toJSON()});
+                });
+
+                return models.Post.add({
+                    title: 'My beautiful title.',
+                    page: 1
+                }, testUtils.context.editor)
+                    .then((post) => {
+                        post.get('title').should.eql('My beautiful title.');
+                        post = post.toJSON();
+
+                        // transformed 1 to true
+                        post.page.should.eql(true);
+                        events.post[0].data.page.should.eql(true);
                     });
             });
 
@@ -122,21 +128,12 @@ describe('Unit: models/post', function () {
                         post.get('title').should.eql('My beautiful title.');
                         post = post.toJSON();
 
-                        _.each(_.keys(_.omit(schema.tables.posts, ['mobiledoc', 'amp', 'plaintext'])), (key) => {
-                            should.exist(post.hasOwnProperty(key));
-                        });
-
                         should.not.exist(post.authors);
                         should.not.exist(post.primary_author);
                         should.exist(post.tags);
                         should.exist(post.primary_tag);
 
                         events.post[0].event.should.eql('added');
-
-                        _.each(_.keys(_.omit(schema.tables.posts, ['mobiledoc', 'amp', 'plaintext'])), (key) => {
-                            should.exist(events.post[0].data.hasOwnProperty(key));
-                        });
-
                         should.exist(events.post[0].data.authors);
                         should.exist(events.post[0].data.primary_author);
                         should.exist(events.post[0].data.tags);
@@ -165,20 +162,12 @@ describe('Unit: models/post', function () {
                         post.get('title').should.eql('My beautiful title.');
                         post = post.toJSON();
 
-                        _.each(_.keys(_.omit(schema.tables.posts, ['mobiledoc', 'amp', 'plaintext'])), (key) => {
-                            should.exist(post.hasOwnProperty(key));
-                        });
-
                         should.exist(post.authors);
                         should.exist(post.primary_author);
                         should.exist(post.tags);
                         should.exist(post.primary_tag);
 
                         events.post[0].event.should.eql('added');
-
-                        _.each(_.keys(_.omit(schema.tables.posts, ['mobiledoc', 'amp', 'plaintext'])), (key) => {
-                            should.exist(events.post[0].data.hasOwnProperty(key));
-                        });
 
                         should.exist(events.post[0].data.authors);
                         should.exist(events.post[0].data.primary_author);
@@ -301,7 +290,7 @@ describe('Unit: models/post', function () {
                     // post will be updated, tags relation not
                     return models.Post.edit({
                         title: 'change',
-                        tags: post.related('tags').toJSON()
+                        tags: post.related('tags').attributes
                     }, _.merge({id: testUtils.DataGenerator.forKnex.posts[3].id}, testUtils.context.editor));
                 })
                 .then((post) => {
@@ -835,9 +824,10 @@ describe('Unit: models/post', function () {
             });
 
             describe('edit', function () {
-                beforeEach(function () {
-                    knexMock.resetDb();
+                beforeEach(testUtils.teardown);
+                beforeEach(testUtils.setup('users:roles', 'posts'));
 
+                beforeEach(function () {
                     // posts[3] has the following author_id
                     testUtils.DataGenerator.forKnex.posts[3].author_id.should.eql(testUtils.DataGenerator.forKnex.users[0].id);
 
@@ -1887,6 +1877,35 @@ describe('Unit: models/post', function () {
                 ).then(() => {
                     should(mockPostObj.get.called).be.false();
                 });
+            });
+        });
+    });
+
+    describe('Mobiledoc conversion', function () {
+        let labs = require('../../../server/services/labs');
+        let origLabs = _.cloneDeep(labs);
+        let events;
+
+        beforeEach(function () {
+            events = {
+                post: []
+            };
+
+            sandbox.stub(models.Post.prototype, 'emitChange').callsFake(function (event) {
+                events.post.push({event: event, data: this.toJSON()});
+            });
+        });
+
+        it('converts correctly', function () {
+            let newPost = testUtils.DataGenerator.forModel.posts[2];
+
+            return models.Post.add(
+                newPost,
+                testUtils.context.editor
+            ).then((post) => {
+                should.exist(post);
+                post.has('html').should.equal(true);
+                post.get('html').should.equal('<h2 id="testing">testing</h2>\n<p>mctesters</p>\n<ul>\n<li>test</li>\n<li>line</li>\n<li>items</li>\n</ul>\n');
             });
         });
     });

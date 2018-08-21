@@ -1,5 +1,3 @@
-'use strict';
-
 // # Posts API
 // RESTful API for the Post resource
 const Promise = require('bluebird'),
@@ -10,7 +8,7 @@ const Promise = require('bluebird'),
     common = require('../lib/common'),
     docName = 'posts',
     /**
-     * @deprecated: `author`, will be removed in Ghost 2.0
+     * @deprecated: `author`, will be removed in Ghost 3.0
      */
     allowedIncludes = [
         'created_by', 'updated_by', 'published_by', 'author', 'tags', 'fields', 'authors', 'authors.roles'

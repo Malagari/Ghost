@@ -81,7 +81,7 @@ describe('Post API', function () {
             });
 
             it('can retrieve multiple post formats', function (done) {
-                request.get(testUtils.API.getApiQuery('posts/?formats=plaintext,mobiledoc,amp'))
+                request.get(testUtils.API.getApiQuery('posts/?formats=plaintext,mobiledoc'))
                     .set('Authorization', 'Bearer ' + ownerAccessToken)
                     .expect('Content-Type', /json/)
                     .expect('Cache-Control', testUtils.cacheRules.private)
@@ -96,7 +96,7 @@ describe('Post API', function () {
                         should.exist(jsonResponse.posts);
                         testUtils.API.checkResponse(jsonResponse, 'posts');
                         jsonResponse.posts.should.have.length(11);
-                        testUtils.API.checkResponse(jsonResponse.posts[0], 'post', ['mobiledoc', 'plaintext', 'amp'], ['html']);
+                        testUtils.API.checkResponse(jsonResponse.posts[0], 'post', ['mobiledoc', 'plaintext'], ['html']);
                         testUtils.API.checkResponse(jsonResponse.meta.pagination, 'pagination');
                         _.isBoolean(jsonResponse.posts[0].featured).should.eql(true);
                         _.isBoolean(jsonResponse.posts[0].page).should.eql(true);
@@ -354,7 +354,7 @@ describe('Post API', function () {
 
             it('can retrieve multiple post formats', function (done) {
                 request
-                    .get(testUtils.API.getApiQuery('posts/' + testUtils.DataGenerator.Content.posts[0].id + '/?formats=plaintext,mobiledoc,amp'))
+                    .get(testUtils.API.getApiQuery('posts/' + testUtils.DataGenerator.Content.posts[0].id + '/?formats=plaintext,mobiledoc'))
                     .set('Authorization', 'Bearer ' + ownerAccessToken)
                     .expect('Content-Type', /json/)
                     .expect('Cache-Control', testUtils.cacheRules.private)
@@ -370,7 +370,7 @@ describe('Post API', function () {
                         jsonResponse.posts.should.have.length(1);
                         jsonResponse.posts[0].id.should.equal(testUtils.DataGenerator.Content.posts[0].id);
 
-                        testUtils.API.checkResponse(jsonResponse.posts[0], 'post', ['mobiledoc', 'plaintext', 'amp'], ['html']);
+                        testUtils.API.checkResponse(jsonResponse.posts[0], 'post', ['mobiledoc', 'plaintext'], ['html']);
 
                         done();
                     });
@@ -1011,7 +1011,6 @@ describe('Post API', function () {
                     .expect('Content-Type', /json/)
                     .expect('Cache-Control', testUtils.cacheRules.private)
                     .end(function (err, res) {
-                        /*jshint unused:false*/
                         if (err) {
                             return done(err);
                         }
@@ -1023,8 +1022,7 @@ describe('Post API', function () {
                             .expect('Content-Type', /json/)
                             .expect('Cache-Control', testUtils.cacheRules.private)
                             .expect(401)
-                            .end(function (err, res) {
-                                /*jshint unused:false*/
+                            .end(function (err) {
                                 if (err) {
                                     return done(err);
                                 }
@@ -1054,7 +1052,6 @@ describe('Post API', function () {
                             .expect('Cache-Control', testUtils.cacheRules.private)
                             .expect(400)
                             .end(function (err, res) {
-                                /*jshint unused:false*/
                                 if (err) {
                                     return done(err);
                                 }
@@ -1300,8 +1297,7 @@ describe('Post API', function () {
                             .send(jsonResponse)
                             .expect('Content-Type', /json/)
                             .expect('Cache-Control', testUtils.cacheRules.private)
-                            .end(function (err, res) {
-                                /*jshint unused:false*/
+                            .end(function (err) {
                                 if (err) {
                                     return done(err);
                                 }
@@ -1329,7 +1325,6 @@ describe('Post API', function () {
                             .expect('Cache-Control', testUtils.cacheRules.private)
                             .send(jsonResponse)
                             .end(function (err, res) {
-                                /*jshint unused:false*/
                                 if (err) {
                                     return done(err);
                                 }
@@ -1415,7 +1410,7 @@ describe('Post API', function () {
                     // create author
                     return testUtils.createUser({
                         user: testUtils.DataGenerator.forKnex.createUser({email: 'test+2@ghost.org'}),
-                        role: testUtils.DataGenerator.Content.roles[2]
+                        role: testUtils.DataGenerator.Content.roles[2].name
                     });
                 })
                 .then(function (_author) {
@@ -1555,7 +1550,7 @@ describe('Post API', function () {
                     // create contributor
                     return testUtils.createUser({
                         user: testUtils.DataGenerator.forKnex.createUser({email: 'test+3@ghost.org'}),
-                        role: testUtils.DataGenerator.Content.roles[4]
+                        role: testUtils.DataGenerator.Content.roles[4].name
                     });
                 })
                 .then(function (_contributor) {
