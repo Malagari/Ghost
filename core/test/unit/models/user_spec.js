@@ -1,4 +1,5 @@
 const should = require('should'),
+    url = require('url'),
     sinon = require('sinon'),
     _ = require('lodash'),
     schema = require('../../../server/data/schema'),

@@ -23,7 +23,7 @@ var Promise = require('bluebird'),
     settingsService = require('../../server/services/settings'),
     settingsCache = require('../../server/services/settings/cache'),
     imageLib = require('../../server/lib/image'),
-    customRedirectsMiddleware = require('../../server/web/middleware/custom-redirects'),
+    web = require('../../server/web'),
     permissions = require('../../server/services/permissions'),
     sequence = require('../../server/lib/promise/sequence'),
     themes = require('../../server/services/themes'),
@@ -401,7 +401,8 @@ fixtures = {
                 Editor: DataGenerator.Content.roles[1].id,
                 Author: DataGenerator.Content.roles[2].id,
                 Owner: DataGenerator.Content.roles[3].id,
-                Contributor: DataGenerator.Content.roles[4].id
+                Contributor: DataGenerator.Content.roles[4].id,
+                'Admin Integration': DataGenerator.Content.roles[5].id
             };
 
         // CASE: if empty db will throw SQLITE_MISUSE, hard to debug
@@ -478,7 +479,19 @@ fixtures = {
         return Promise.map(DataGenerator.forKnex.webhooks, function (webhook) {
             return models.Webhook.add(webhook, module.exports.context.internal);
         });
-    }
+    },
+
+    insertIntegrations: function insertIntegrations() {
+        return Promise.map(DataGenerator.forKnex.integrations, function (integration) {
+            return models.Integration.add(integration, module.exports.context.internal);
+        });
+    },
+
+    insertApiKeys: function insertApiKeys() {
+        return Promise.map(DataGenerator.forKnex.api_keys, function (api_key) {
+            return models.ApiKey.add(api_key, module.exports.context.internal);
+        });
+    },
 };
 
 /** Test Utility Functions **/
@@ -624,6 +637,12 @@ toDoList = {
     },
     webhooks: function insertWebhooks() {
         return fixtures.insertWebhooks();
+    },
+    integrations: function insertIntegrations() {
+        return fixtures.insertIntegrations();
+    },
+    api_keys: function insertApiKeys() {
+        return fixtures.insertApiKeys();
     }
 };
 
@@ -844,9 +863,13 @@ teardown = function teardown() {
  * we start with a small function set to mock non existent modules
  */
 originalRequireFn = Module.prototype.require;
-mockNotExistingModule = function mockNotExistingModule(modulePath, module) {
+mockNotExistingModule = function mockNotExistingModule(modulePath, module, error = false) {
     Module.prototype.require = function (path) {
         if (path.match(modulePath)) {
+            if (error) {
+                throw module;
+            }
+
             return module;
         }
 
@@ -939,7 +962,7 @@ startGhost = function startGhost(options) {
                 });
             })
             .then(function () {
-                customRedirectsMiddleware.reload();
+                web.shared.middlewares.customRedirects.reload();
 
                 common.events.emit('server.start');
                 return ghostServer;
@@ -1135,7 +1158,9 @@ module.exports = {
         admin: {context: {user: DataGenerator.Content.users[1].id}},
         editor: {context: {user: DataGenerator.Content.users[2].id}},
         author: {context: {user: DataGenerator.Content.users[3].id}},
-        contributor: {context: {user: DataGenerator.Content.users[7].id}}
+        contributor: {context: {user: DataGenerator.Content.users[7].id}},
+        admin_api_key: {context: {api_key: DataGenerator.Content.api_keys[0].id}},
+        content_api_key: {context: {api_key: DataGenerator.Content.api_keys[1].id}}
     },
     permissions: {
         owner: {user: {roles: [DataGenerator.Content.roles[3]]}},

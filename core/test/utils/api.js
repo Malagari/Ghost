@@ -61,9 +61,20 @@ function getApiQuery(route) {
     return url.resolve(ApiRouteBase, route);
 }
 
-function getApiURL(route) {
-    var baseURL = url.resolve(protocol + host + ':' + port, ApiRouteBase);
-    return url.resolve(baseURL, route);
+function getApiPath(options) {
+    const baseAPIPath = '/ghost/api/';
+    switch (options.version) {
+        case 'deprecated':
+            return `${baseAPIPath}v0.1/`;
+        case 'active':
+            if (options.versionType === 'admin') {
+                return `${baseAPIPath}v2/admin/`;
+            } else {
+                return `${baseAPIPath}v2/content/`;
+            }
+        default:
+            return `${baseAPIPath}v0.1/`;
+    }
 }
 
 function getURL() {
@@ -113,8 +124,8 @@ function checkResponse(jsonResponse, objectType, additionalProperties, missingPr
 }
 
 module.exports = {
-    getApiURL: getApiURL,
     getApiQuery: getApiQuery,
+    getApiPath: getApiPath,
     getSigninURL: getSigninURL,
     getAdminURL: getAdminURL,
     getURL: getURL,

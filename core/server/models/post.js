@@ -9,7 +9,6 @@ var _ = require('lodash'),
     ghostBookshelf = require('./base'),
     config = require('../config'),
     converters = require('../lib/mobiledoc/converters'),
-    urlService = require('../services/url'),
     relations = require('./relations'),
     Post,
     Posts;
@@ -390,7 +389,7 @@ Post = ghostBookshelf.Model.extend({
      * If you are requesting models with `columns`, you try to only receive some fields of the model/s.
      * But the model layer is complex and needs specific fields in specific situations.
      *
-     * ### url generation
+     * ### url generation was removed but default columns need to be checked before removal
      *   - @TODO: with dynamic routing, we no longer need default columns to fetch
      *   - because with static routing Ghost generated the url on runtime and needed the following attributes:
      *     - `slug`: /:slug/
@@ -451,10 +450,6 @@ Post = ghostBookshelf.Model.extend({
             }
         }
 
-        if (!options.columns || (options.columns && options.columns.indexOf('url') > -1)) {
-            attrs.url = urlService.getUrlByResourceId(attrs.id);
-        }
-
         return attrs;
     },
     enforcedFilters: function enforcedFilters(options) {
@@ -484,7 +479,7 @@ Post = ghostBookshelf.Model.extend({
             'CASE WHEN posts.status = \'scheduled\' THEN 1 ' +
             'WHEN posts.status = \'draft\' THEN 2 ' +
             'ELSE 3 END ASC,' +
-            'posts.published_at DESC,' +
+            'CASE WHEN posts.status != \'draft\' THEN posts.published_at END DESC,' +
             'posts.updated_at DESC,' +
             'posts.id DESC';
     },
@@ -534,7 +529,7 @@ Post = ghostBookshelf.Model.extend({
      * @return {Array} Keys allowed in the `options` hash of the model's method.
      */
     permittedOptions: function permittedOptions(methodName) {
-        var options = ghostBookshelf.Model.permittedOptions(),
+        var options = ghostBookshelf.Model.permittedOptions.call(this, methodName),
 
             // whitelists for the `options` hash argument on methods, by method name.
             // these are the only options that can be passed to Bookshelf / Knex.

@@ -1,4 +1,5 @@
 var should = require('should'),
+    url = require('url'),
     sinon = require('sinon'),
     models = require('../../../server/models'),
     testUtils = require('../../utils'),

@@ -1,6 +1,8 @@
 var should = require('should'),
     supertest = require('supertest'),
     _ = require('lodash'),
+    url = require('url'),
+    cheerio = require('cheerio'),
     moment = require('moment'),
     testUtils = require('../../../utils'),
     configUtils = require('../../../utils/configUtils'),
@@ -49,6 +51,134 @@ describe('Public API', function () {
                 testUtils.API.checkResponse(jsonResponse.meta.pagination, 'pagination');
                 _.isBoolean(jsonResponse.posts[0].featured).should.eql(true);
                 _.isBoolean(jsonResponse.posts[0].page).should.eql(true);
+                done();
+            });
+    });
+
+    it('browse pages', function (done) {
+        request.get('/ghost/api/v2/content/pages/?client_id=ghost-admin&client_secret=not_available')
+            .set('Origin', testUtils.API.getURL())
+            .expect('Content-Type', /json/)
+            .expect('Cache-Control', testUtils.cacheRules.private)
+            .expect(200)
+            .end(function (err, res) {
+                if (err) {
+                    return done(err);
+                }
+
+                res.headers.vary.should.eql('Origin, Accept-Encoding');
+                should.exist(res.headers['access-control-allow-origin']);
+                should.not.exist(res.headers['x-cache-invalidate']);
+
+                const jsonResponse = res.body;
+                should.exist(jsonResponse.pages);
+                should.exist(jsonResponse.meta);
+                jsonResponse.pages.should.have.length(1);
+                done();
+            });
+    });
+
+    it('browse posts: request absolute urls', function (done) {
+        request.get(testUtils.API.getApiQuery('posts/?client_id=ghost-admin&client_secret=not_available&absolute_urls=true'))
+            .set('Origin', testUtils.API.getURL())
+            .expect('Content-Type', /json/)
+            .expect('Cache-Control', testUtils.cacheRules.private)
+            .expect(200)
+            .end(function (err, res) {
+                if (err) {
+                    return done(err);
+                }
+
+                should.exist(res.body.posts);
+
+                // kitchen sink
+                res.body.posts[9].slug.should.eql(testUtils.DataGenerator.Content.posts[1].slug);
+
+                let urlParts = url.parse(res.body.posts[9].feature_image);
+                should.exist(urlParts.protocol);
+                should.exist(urlParts.host);
+
+                urlParts = url.parse(res.body.posts[9].url);
+                should.exist(urlParts.protocol);
+                should.exist(urlParts.host);
+
+                const $ = cheerio.load(res.body.posts[9].html);
+                urlParts = url.parse($('img').attr('src'));
+                should.exist(urlParts.protocol);
+                should.exist(urlParts.host);
+
+                done();
+            });
+    });
+
+    it('browse posts: request to include tags and authors with absolute_urls', function (done) {
+        request.get(testUtils.API.getApiQuery('posts/?client_id=ghost-admin&client_secret=not_available&absolute_urls=true&include=tags,authors'))
+            .set('Origin', testUtils.API.getURL())
+            .expect('Content-Type', /json/)
+            .expect('Cache-Control', testUtils.cacheRules.private)
+            .expect(200)
+            .end(function (err, res) {
+                if (err) {
+                    return done(err);
+                }
+
+                should.exist(res.body.posts);
+
+                // kitchen sink
+                res.body.posts[9].slug.should.eql(testUtils.DataGenerator.Content.posts[1].slug);
+
+                should.exist(res.body.posts[9].tags);
+                should.exist(res.body.posts[9].tags[0].url);
+                should.exist(url.parse(res.body.posts[9].tags[0].url).protocol);
+                should.exist(url.parse(res.body.posts[9].tags[0].url).host);
+
+                should.exist(res.body.posts[9].primary_tag);
+                should.exist(res.body.posts[9].primary_tag.url);
+                should.exist(url.parse(res.body.posts[9].primary_tag.url).protocol);
+                should.exist(url.parse(res.body.posts[9].primary_tag.url).host);
+
+                should.exist(res.body.posts[9].authors);
+                should.exist(res.body.posts[9].authors[0].url);
+                should.exist(url.parse(res.body.posts[9].authors[0].url).protocol);
+                should.exist(url.parse(res.body.posts[9].authors[0].url).host);
+
+                should.exist(res.body.posts[9].primary_author);
+                should.exist(res.body.posts[9].primary_author.url);
+                should.exist(url.parse(res.body.posts[9].primary_author.url).protocol);
+                should.exist(url.parse(res.body.posts[9].primary_author.url).host);
+
+                done();
+            });
+    });
+
+    it('browse posts: request to include tags and authors without absolute_urls', function (done) {
+        request.get(testUtils.API.getApiQuery('posts/?client_id=ghost-admin&client_secret=not_available&include=tags,authors'))
+            .set('Origin', testUtils.API.getURL())
+            .expect('Content-Type', /json/)
+            .expect('Cache-Control', testUtils.cacheRules.private)
+            .expect(200)
+            .end(function (err, res) {
+                if (err) {
+                    return done(err);
+                }
+
+                should.exist(res.body.posts);
+
+                // kitchen sink
+                res.body.posts[9].slug.should.eql(testUtils.DataGenerator.Content.posts[1].slug);
+
+                should.exist(res.body.posts[9].tags);
+                should.not.exist(res.body.posts[9].tags[0].url);
+
+                should.exist(res.body.posts[9].primary_tag);
+                should.not.exist(res.body.posts[9].primary_tag.url);
+
+                should.exist(res.body.posts[9].authors);
+                should.not.exist(res.body.posts[9].authors[0].url);
+
+                should.exist(res.body.posts[9].primary_author);
+                should.not.exist(res.body.posts[9].primary_author.url);
+
                 done();
             });
     });
@@ -187,6 +317,25 @@ describe('Public API', function () {
                 jsonResponse.tags.should.have.length(4);
                 testUtils.API.checkResponse(jsonResponse.tags[0], 'tag');
                 testUtils.API.checkResponse(jsonResponse.meta.pagination, 'pagination');
+                done();
+            });
+    });
+
+    it('browse tags: request absolute urls', function (done) {
+        request.get(testUtils.API.getApiQuery('tags/?client_id=ghost-admin&client_secret=not_available&absolute_urls=true'))
+            .set('Origin', testUtils.API.getURL())
+            .expect('Content-Type', /json/)
+            .expect('Cache-Control', testUtils.cacheRules.private)
+            .expect(200)
+            .end(function (err, res) {
+                if (err) {
+                    return done(err);
+                }
+
+                should.exist(res.body.tags[0].url);
+                should.exist(url.parse(res.body.tags[0].url).protocol);
+                should.exist(url.parse(res.body.tags[0].url).host);
+
                 done();
             });
     });
@@ -339,6 +488,25 @@ describe('Public API', function () {
 
                 // We don't expose the email address.
                 testUtils.API.checkResponse(jsonResponse.users[0], 'user', null, null, null, {public: true});
+                done();
+            });
+    });
+
+    it('browse users: request absolute urls', function (done) {
+        request.get(testUtils.API.getApiQuery('users/?client_id=ghost-admin&client_secret=not_available&absolute_urls=true'))
+            .set('Origin', testUtils.API.getURL())
+            .expect('Content-Type', /json/)
+            .expect('Cache-Control', testUtils.cacheRules.private)
+            .expect(200)
+            .end(function (err, res) {
+                if (err) {
+                    return done(err);
+                }
+
+                should.exist(res.body.users[0].url);
+                should.exist(url.parse(res.body.users[0].url).protocol);
+                should.exist(url.parse(res.body.users[0].url).host);
+
                 done();
             });
     });

@@ -1,6 +1,6 @@
 const _ = require('lodash'),
     Promise = require('bluebird'),
-    common = require('../../lib/common/index');
+    common = require('../../lib/common');
 
 /**
  * Why and when do we have to fetch `authors` by default?
@@ -177,6 +177,7 @@ module.exports.extendModel = function extendModel(Post, Posts, ghostBookshelf) {
                 delete attrs.author_id;
             } else {
                 // CASE: we return `post.author=id` with or without requested columns.
+                // @NOTE: this serialization should be moved into api layer, it's not being moved as it's not used
                 if (!options.columns || (options.columns && options.columns.indexOf('author') !== -1)) {
                     attrs.author = attrs.author_id;
                     delete attrs.author_id;
@@ -190,7 +191,7 @@ module.exports.extendModel = function extendModel(Post, Posts, ghostBookshelf) {
 
             // If the current column settings allow it...
             if (!options.columns || (options.columns && options.columns.indexOf('primary_author') > -1)) {
-                // ... attach a computed property of primary_author which is the first tag
+                // ... attach a computed property of primary_author which is the first author
                 if (attrs.authors && attrs.authors.length) {
                     attrs.primary_author = attrs.authors[0];
                 } else {
